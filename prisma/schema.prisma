@@ -1,0 +1,343 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id           Int            @id @default(autoincrement())
+  full_name         String
+  email             String         
+  password          String
+  original_password String?
+  created_at        DateTime       @default(now())
+  updated_at        DateTime       @updatedAt
+  role              Role
+  token             String?        @unique
+  menu              Json?
+  deleted           Boolean        @default(false)
+  pm_notes_created  PMNotes[]      @relation("UserNote")
+  pm_notes_replied  PMNotes[]      @relation("UserReply")
+  SubmitRating      SubmitRating[]
+}
+
+enum Role {
+  Superadmin
+  Admin
+  User
+}
+
+model RecordLog {
+  log_activity_id  Int      @id @default(autoincrement())
+  menu_name        String
+  data_name        String // id yang diubah
+  field            String?
+  action           String
+  old_value        String?
+  new_value        String?
+  updated_by_email String
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+}
+
+model Menu {
+  menu_id    Int      @id @default(autoincrement())
+  menu_name  String
+  parentId   Int?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  parent     Menu?    @relation("Submenu", fields: [parentId], references: [menu_id])
+  children   Menu[]   @relation("Submenu")
+}
+
+model Tool {
+  tool_id    Int      @id @default(autoincrement())
+  tool_name  String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted    Boolean  @default(false)
+}
+
+enum VariableType {
+  Translation
+  NonTranslation
+  Vendor
+}
+
+model Variable {
+  variable_id   Int          @id @default(autoincrement())
+  variable_name String
+  variable_type VariableType
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+}
+
+model Template {
+  template_id   Int          @id @default(autoincrement())
+  template_name String
+  template_type TipeTemplate
+  variable      Json
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+}
+
+enum TipeTemplate {
+  TRANSLATION
+  NON_TRANSLATION
+  VENDOR
+}
+
+model RateType {
+  rate_type_id   Int        @id @default(autoincrement())
+  rate_type_name String
+  created_at     DateTime   @default(now())
+  updated_at     DateTime   @updatedAt
+  deleted        Boolean    @default(false)
+}
+
+model FinancialDirectory {
+  financial_directory_id    Int      @id @default(autoincrement())
+  financial_directory_name  String
+  financial_directory_files Json
+  financial_directory_total Int
+  created_at                DateTime @default(now())
+  updated_at                DateTime @updatedAt
+}
+
+// 
+// RESOURCE
+// 
+model Country {
+  id        Int     @id
+  name      String  @unique
+  iso3      String
+  iso2      String
+  region    String?
+  subregion String?
+
+  cities    City[]
+  state     State[]
+  Freelance Freelance[]
+  Vendor    Vendor[]
+}
+
+model State {
+  id Int @id
+
+  country_id Int
+  country    Country @relation(fields: [country_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  name       String @unique
+  state_code String
+
+  city      City[]
+  Freelance Freelance[]
+  Vendor    Vendor[]
+}
+
+model City {
+  id   Int    @id
+  name String
+
+  state_id Int
+  state    State @relation(fields: [state_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  country_id Int
+  country    Country     @relation(fields: [country_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  Freelance  Freelance[]
+  Vendor     Vendor[]
+}
+
+model Currency {
+  id        Int         @id @default(autoincrement())
+  name      String
+  code      String?
+  Freelance Freelance[]
+  Vendor    Vendor[]
+}
+
+model Language {
+  id   Int    @id @default(autoincrement())
+  code String
+  name String
+
+  freelance_language_from Freelance[] @relation("FreelanceLanguageFrom")
+  freelance_language_to   Freelance[] @relation("FreelanceLanguageTo")
+}
+
+enum TypeFreelance {
+  Translation
+  NonTranslation
+}
+
+enum ResourceStatusFreelance {
+  FreelanceNPWP
+  FreelanceNonNPWP
+}
+
+enum ResourceStatusVendor {
+  VendorPKP
+  VendorNonPKP
+}
+
+model Freelance {
+  freelance_id   String        @id @default(uuid())
+  type_freelance TypeFreelance
+  username       String        @unique
+  full_name      String
+  whatsapp       String
+  nickname       String
+  email          String
+
+  language_from_id Int?
+  language_to_id   Int?
+
+  language_from Language? @relation("FreelanceLanguageFrom", fields: [language_from_id], references: [id])
+  language_to   Language? @relation("FreelanceLanguageTo", fields: [language_to_id], references: [id])
+
+  specialization_on String?
+
+  tools Json?
+
+  country_id Int
+  country    Country @relation(fields: [country_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  state_id Int
+  state    State @relation(fields: [state_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  city_id Int
+  city    City @relation(fields: [city_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  district            String
+  postal_code         String
+
+  full_address        String?
+  bank_name           String?
+  branch_office       String?
+  account_holder_name String?
+  account_number      String?
+
+  name_tax        String?
+  resource_status ResourceStatusFreelance?
+  npwp_number     String?
+
+  currency_id Int?
+  currency    Currency? @relation(fields: [currency_id], references: [id])
+
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @updatedAt
+  PMNotes      PMNotes[]
+  SubmitRating SubmitRating[]
+  attachments  Json?
+  list_rate    Json?
+  deleted      Boolean        @default(false)
+}
+
+model Vendor {
+  vendor_id   String @id @default(uuid())
+  username    String @unique
+  vendor_name String
+  whatsapp    String
+  pic_name    String
+  email       String
+  contact_via String
+
+  country_id Int
+  country    Country @relation(fields: [country_id], references: [id])
+
+  state_id Int
+  state    State @relation(fields: [state_id], references: [id])
+
+  city_id Int
+  city    City @relation(fields: [city_id], references: [id])
+
+  district            String
+  postal_code         String
+
+  full_address        String?
+  bank_name           String?
+  branch_office       String?
+  account_holder_name String?
+  account_number      String?
+  name_tax            String?
+  resource_status     ResourceStatusVendor?
+  npwp_number         String?
+
+  currency_id Int?
+  currency    Currency? @relation(fields: [currency_id], references: [id])
+
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @updatedAt
+  PMNotes      PMNotes[]
+  SubmitRating SubmitRating[]
+  attachments  Json?
+  list_rate    Json?
+  deleted      Boolean        @default(false)
+}
+
+enum TypeResource {
+  Freelance
+  Vendor
+}
+
+enum StatusApproval {
+  Approved
+  Rejected
+  Pending
+}
+
+model PMNotes {
+  pm_notes_id   Int          @id @default(autoincrement())
+  type_resource TypeResource
+
+  freelance    Freelance? @relation(fields: [freelance_id], references: [freelance_id])
+  freelance_id String?
+
+  vendor    Vendor? @relation(fields: [vendor_id], references: [vendor_id])
+  vendor_id String?
+
+  note            String
+  reply           String?
+  status_approval StatusApproval
+  created_at      DateTime       @default(now())
+  updated_at      DateTime       @updatedAt
+
+  user_note_id  Int
+  user_reply_id Int?
+
+  user_note  User  @relation("UserNote", fields: [user_note_id], references: [user_id])
+  user_reply User? @relation("UserReply", fields: [user_reply_id], references: [user_id])
+}
+
+model SubmitRating {
+  submit_rating_id Int          @id @default(autoincrement())
+  type_resource    TypeResource
+
+  freelance_id String?
+  freelance    Freelance? @relation(fields: [freelance_id], references: [freelance_id])
+
+  vendor_id String?
+  vendor    Vendor? @relation(fields: [vendor_id], references: [vendor_id])
+
+  rating       Float
+  project_name String
+  review       String
+
+  files Json?
+
+  user_id Int
+  user    User @relation(fields: [user_id], references: [user_id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+

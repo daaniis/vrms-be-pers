@@ -1,0 +1,8 @@
+tidak sesuai kriteria sama sekali = 70
+kriteria:
+1. menambahkan CRUD (create update delete + tampil list data dan detail data) ke dalam database data barang / jasa (6)
+2. Tambahkan data gambar juga dalam data barang/jasa anda (3)
+3. Tambahkan 1 tabel lagi yang terelasi dengan tabel barang/jasa semisal jenis barang/ jenis jasa (5)
+4. relasikan dan gunakan untuk join tabel menampilkan list barang/jasa serta data dropdown jenis barang/jasa pada halaman tambah dan edit. tabel tambahan tidak harus dibuatkan halaman CRUD (6)
+
+E:\xampp\htdocs

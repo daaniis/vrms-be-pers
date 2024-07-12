@@ -1,0 +1,11 @@
+.git
+node_modules
+nginx.conf
+dist
+.env
+.eslint*
+.prettier*
+.gitignore
+dockerfile
+.dockerignore
+README.md
